@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 const rapidApiKey = import.meta.env.VITE_RAPID_API_ARTICLE_KEY;
+const googleTranslateApiKey = import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY;
 
 export const articleApi = createApi({
     reducerPath: 'articleApi',
@@ -9,17 +10,28 @@ export const articleApi = createApi({
         prepareHeaders: (headers) => {
             headers.set('X-RapidAPI-Key', rapidApiKey);
             headers.set('X-RapidAPI-Host', 'article-extractor-and-summarizer.p.rapidapi.com');
-
             return headers;
         },
     }),
     endpoints: (builder) => ({
         getSummary: builder.query({
-            // encodeURIComponent() function encodes special characters that may be present in the parameter values
-            // If we do not properly encode these characters, they can be misinterpreted by the server and cause errors or unexpected behavior. Thus that RTK bug
             query: (params) => `summarize?url=${encodeURIComponent(params.articleUrl)}&length=3`,
+        }),
+        translateText: builder.query({
+            query: (text) => ({
+                url: `https://translation.googleapis.com/language/translate/v2`,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${googleTranslateApiKey}`,
+                },
+                body: JSON.stringify({
+                    q: text,
+                    target: 'tr',
+                }),
+            }),
         }),
     }),
 })
 
-export const { useLazyGetSummaryQuery } = articleApi
+export const { useLazyGetSummaryQuery, useLazyTranslateTextQuery } = articleApi
